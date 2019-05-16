@@ -71,7 +71,8 @@ token会被送入模型，模型会预测输出label、predicate value 和 predi
 |run_multiple_relations_extraction_XXX.py|File under experiment.|
 
 ### Need Help
-Well-designed loss function!
+1. Well-designed loss function!
+2. https://github.com/bekou/multihead_joint_entity_relation_extraction/issues/11
 
 ## Use example
 ### [2019语言与智能技术竞赛](http://lic2019.ccf.org.cn/kg)
@@ -108,11 +109,10 @@ unzip dev_data.json.zip
 cd -
 ```
 
-**Data is only used for learning and communication!**
+此处不再提供2019语言与智能技术竞赛_信息抽取原始数据下载，如有疑问可以联系我的邮箱 wangzichaochaochao@gmail.com
 
-[百度网盘-2019语言与智能技术竞赛_信息抽取raw_data](https://pan.baidu.com/s/10-3iV9gR_-Lvxj9B6bSW2g)
-+ 百度网盘提取码：链接：https://pan.baidu.com/s/10-3iV9gR_-Lvxj9B6bSW2g 
-+ 提取码：hou4 
+There is no longer a raw data download, if you have any questions, you can contact my mailbox wangzichaochaochao@gmail.com
+
 
 #### Step3: Data preprocessing
 ```
