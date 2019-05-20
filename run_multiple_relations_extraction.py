@@ -530,16 +530,22 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
 
     with tf.variable_scope("predicate_head_select_loss"):
         bert_sequenc_length = sequence_bert_encode_output.shape[-2].value
+        #shape [batch_size, sequence_length, sequencd_length, predicate_label_numbers]
         predicate_score_matrix = getHeadSelectionScores(encode_input=sequence_bert_encode_output, hidden_size_n1=100,
                                                         label_number=num_predicate_labels)
         predicate_head_probabilities = tf.nn.sigmoid(predicate_score_matrix)
+        #predicate_head_prediction = tf.argmax(predicate_head_probabilities, axis=3)
         predicate_head_predictions_round = tf.round(predicate_head_probabilities)
         predicate_head_predictions = tf.cast(predicate_head_predictions_round, tf.int32)
+        #shape [batch_size, sequence_length, sequencd_length]
         predicate_matrix = tf.reshape(predicate_matrix_ids, [-1, bert_sequenc_length, bert_sequenc_length])
+        #shape [batch_size, sequence_length, sequencd_length, predicate_label_numbers]
         gold_predicate_matrix_one_hot = tf.one_hot(predicate_matrix, depth=num_predicate_labels, dtype=tf.float32)
+        # shape [batch_size, sequence_length, sequencd_length, predicate_label_numbers]
         predicate_sigmoid_cross_entropy_with_logits = tf.nn.sigmoid_cross_entropy_with_logits(
             logits=predicate_score_matrix,
             labels=gold_predicate_matrix_one_hot)
+        # shape []
         predicate_head_select_loss = tf.reduce_sum(predicate_sigmoid_cross_entropy_with_logits)
         # return predicate_head_probabilities, predicate_head_predictions, predicate_head_select_loss
 
