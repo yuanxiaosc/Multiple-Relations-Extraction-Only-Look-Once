@@ -67,16 +67,19 @@ token会被送入模型，模型会预测输出label、predicate value 和 predi
 |raw_data||
 |for_infer_out.py|Check model prediction results.|
 |read_file.py|Read formatted data.|
+|summary_model_prediction.py|Transforming model predictive output into triple form.|
 |run_multiple_relations_extraction.py|The most basic model for model training and prediction.|
 |run_multiple_relations_extraction_XXX.py|File under experiment.|
 
 ### Need Your Help!
+
 1. Well-designed loss function!
 2. https://github.com/bekou/multihead_joint_entity_relation_extraction/issues/11
 
 **Problem code location**
 > run_multiple_relations_extraction.py 531~549 lines!
 
+You can try different experiments (run_multiple_relations_extraction_XXX.py) and share your results.
 
 ## Use example
 ### [2019语言与智能技术竞赛](http://lic2019.ccf.org.cn/kg)
