@@ -62,19 +62,19 @@ token会被送入模型，模型会预测输出label、predicate value 和 predi
 |-|-|
 |bert|The feature extractor of the model, where BERT is used as the feature extractor for the model. It can be replaced with other feature extractors, such as BiLSTM and CNN.|
 |bin/data_manager.py|Prepare formatted data for the mode.|
+|bin/integrated_model_output.py|Organize the output of model prediction into standard data format.|
 |bin/read_standard_format_data.py|View formatted data.|
 |bin/test_head_select_scores.py|One method for solving the relationship extraction problem: the multi-head selection method.|
 |raw_data||
-|for_infer_out.py|Check model prediction results.|
-|read_file.py|Read formatted data.|
-|summary_model_prediction.py|Transforming model predictive output into triple form.|
+|produce_submit_json_file.py|Generate entity relationship triples and write them to JSON files.|
 |run_multiple_relations_extraction.py|The most basic model for model training and prediction.|
 |run_multiple_relations_extraction_XXX.py|File under experiment.|
 
 ### Need Your Help!
 
-1. Well-designed loss function!
-2. https://github.com/bekou/multihead_joint_entity_relation_extraction/issues/11
++ Well-designed loss function!
++ https://github.com/bekou/multihead_joint_entity_relation_extraction/issues/11
++ Improve the speed of produce_submit_json_file.py to generate entity relationship files, and change to parallel processing!
 
 **Problem code location**
 > run_multiple_relations_extraction.py 531~549 lines!
@@ -82,7 +82,9 @@ token会被送入模型，模型会预测输出label、predicate value 和 predi
 You can try different experiments (run_multiple_relations_extraction_XXX.py) and share your results.
 
 ## Use example
+
 ### [2019语言与智能技术竞赛](http://lic2019.ccf.org.cn/kg)
+
 #### 竞赛任务
 给定schema约束集合及句子sent，其中schema定义了关系P以及其对应的主体S和客体O的类别，例如（S_TYPE:人物，P:妻子，O_TYPE:人物）、（S_TYPE:公司，P:创始人，O_TYPE:人物）等。 任务要求参评系统自动地对句子进行分析，输出句子中所有满足schema约束的SPO三元组知识Triples=[(S1, P1, O1), (S2, P2, O2)…]。
 输入/输出:
@@ -99,6 +101,7 @@ You can try different experiments (run_multiple_relations_extraction_XXX.py) and
 
 
 ### Getting Started
+
 #### Environment Requirements
 + python 3.6+
 + Tensorflow 1.12.0+
@@ -120,13 +123,15 @@ cd -
 
 There is no longer a raw data download, if you have any questions, you can contact my mailbox wangzichaochaochao@gmail.com
 
-
 #### Step3: Data preprocessing
 ```
 python bin/data_manager.py
 ```
 
+> It is currently recommended to use the run_multiple_relations_extraction_MSE_loss.py file instead of the run_multiple_relations_extraction.py file for model and forecasting!
+
 #### Step4： Model training
+
 ```
 python run_multiple_relations_extraction.py \
 --task_name=SKE_2019 \
@@ -143,7 +148,7 @@ python run_multiple_relations_extraction.py \
 --output_dir=./output_model/multiple_relations_model/epochs3/
 ```
 
-### Step5: Model prediction
+#### Step5: Model prediction
 ```
 python run_multiple_relations_extraction.py \
   --task_name=SKE_2019 \
@@ -155,6 +160,13 @@ python run_multiple_relations_extraction.py \
   --max_seq_length=128 \
   --output_dir=./infer_out/multiple_relations_model/epochs3/ckpt2000
 ```
+
+#### Step6: Generating Entities and Relational Files
+```
+python produce_submit_json_file.py
+```
+
+> You can use other strategies to generate the final entity relationship file for better results. I have written the template code for you (see produce_submit_json_file.py).
 
 ## Paper realization
 This code is an unofficial implementation of [Extracting Multiple-Relations in One-Pass with Pre-Trained Transformers](https://arxiv.org/abs/1902.01030) and [Joint entity recognition and relation extraction as a multi-head selection problem](https://arxiv.org/abs/1804.07847).
