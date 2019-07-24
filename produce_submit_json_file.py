@@ -2,6 +2,7 @@ from bin.integrated_model_output import Standard_Model_Output, get_predicate_mat
     schemas_subject_object_type_2_predicate_list, predicate_id2label_map, get_predicate_labels
 
 import json
+import os
 from tqdm import tqdm
 
 #生成实体关系json文件的策略二
@@ -27,8 +28,8 @@ def generation_subject_predicate_object_triple_strategy_two(standard_model_outpu
 
 
 #生成实体关系json文件的策略一
-def generation_subject_predicate_object_triple_strategy_one(standard_model_output):
-    result_json_write_f = open("subject_predicate_object_predict_output.json", "w", encoding='utf-8')
+def generation_subject_predicate_object_triple_strategy_one(standard_model_output, store_submit_json_file_path):
+    result_json_write_f = open(store_submit_json_file_path, "w", encoding='utf-8')
     #根据实体类型对应的可能关系类型以及模型输出的关系矩阵值生成候选关系列表
     def get_candicate_predicate_list(correct_predicate_scope_list, subject_object_predicate_row):
         candidate_predicate_list = list()
@@ -55,7 +56,7 @@ def generation_subject_predicate_object_triple_strategy_one(standard_model_outpu
         predicate_head_id_matrix = get_predicate_matrix(predicate_head)
         for subject_entity_type, subject_entity_position, subject_entity_value in entity_tuple_list:
             for object_entity_type, object_entity_position, object_entity_value in entity_tuple_list:
-                if subject_entity_type in subject_type_list and object_entity_type in object_type_list:
+                if subject_entity_type in subject_type_list and object_entity_type in object_type_list and subject_entity_value!= object_entity_value:
                     if (subject_entity_type, object_entity_type) in schemas_subject_object_type_2_predicate_list:
                         correct_predicate_scope_list = schemas_subject_object_type_2_predicate_list[
                             (subject_entity_type, object_entity_type)]
@@ -78,8 +79,18 @@ def generation_subject_predicate_object_triple_strategy_one(standard_model_outpu
         result_json_write_f.write(line_json + "\n")
     result_json_write_f.close()
 
+def get_store_submit_json_file_path(model_infer_out_file_path, store_file_dir, json_file_name="submit_entity_relation_file.json"):
+    if not os.path.exists(store_file_dir):
+        os.mkdir(store_file_dir)
+    _, epochs, ckpt = model_infer_out_file_path.split("/")
+    json_file_name = epochs + "_" + ckpt + "_" + json_file_name
+    json_file_name_path = os.path.join(store_file_dir, json_file_name)
+    return json_file_name_path
+
 if __name__=="__main__":
-    model_infer_out_file_path = "infer_out/epochs6_MSE/ckpt4000"
+    model_infer_out_file_path = "infer_out/epochs9_MSE/ckpt16000"
     standard_format_data_test_path = "bin/standard_format_data/test"
+    store_submit_json_file_path = get_store_submit_json_file_path(model_infer_out_file_path, "store_submit_json_file")
+
     standard_model_output = Standard_Model_Output(model_infer_out_file_path, standard_format_data_test_path)
-    generation_subject_predicate_object_triple_strategy_one(standard_model_output)
+    generation_subject_predicate_object_triple_strategy_one(standard_model_output, store_submit_json_file_path)

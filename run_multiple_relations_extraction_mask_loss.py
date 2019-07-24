@@ -274,7 +274,8 @@ class SKE_2019_Subject_Relation_Object_extraction_Processor(DataProcessor):
                 predicate_location_list = line[3]
             examples.append(
                 InputExample(guid=guid, text_token=text_token, token_label=token_label,
-                             predicate_value_list=predicate_value_list, predicate_location_list=predicate_location_list))
+                             predicate_value_list=predicate_value_list,
+                             predicate_location_list=predicate_location_list))
         return examples
 
 
@@ -305,14 +306,13 @@ def convert_single_example(ex_index, example, token_label_list, predicate_label_
         token_label = ["O"] * len(text_token)
     assert len(text_token) == len(token_label)
 
-
-    if len(text_token) > (max_seq_length-2): #one for [CLS] and one for [SEP]
-        text_token = text_token[0:max_seq_length-2]
-        token_label = token_label[0:max_seq_length-2]
+    if len(text_token) > (max_seq_length - 2):  # one for [CLS] and one for [SEP]
+        text_token = text_token[0:max_seq_length - 2]
+        token_label = token_label[0:max_seq_length - 2]
 
     if example.predicate_value_list is not None:
         predicate_value_list = example.predicate_value_list
-        predicate_location_list =example.predicate_location_list
+        predicate_location_list = example.predicate_location_list
     else:
         predicate_value_list = [["N"] for _ in range(len(token_label))]
         predicate_location_list = [[i] for i in range(len(token_label))]
@@ -338,11 +338,9 @@ def convert_single_example(ex_index, example, token_label_list, predicate_label_
 
     input_ids = tokenizer.convert_tokens_to_ids(tokens)
 
-
     # The mask has 1 for real tokens and 0 for padding tokens. Only real
     # tokens are attended to.
     input_mask = [1] * len(input_ids)
-
 
     # Zero-pad up to the sequence length.
     while len(input_ids) < max_seq_length:
@@ -481,6 +479,7 @@ def getHeadSelectionScores(encode_input, hidden_size_n1, label_number):
     """
     Check out this paper https://arxiv.org/abs/1804.07847
     """
+
     def broadcasting(left, right):
         left = tf.transpose(left, perm=[1, 0, 2])
         left = tf.expand_dims(left, 3)
@@ -533,24 +532,28 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
 
     with tf.variable_scope("predicate_head_select_loss"):
         bert_sequenc_length = sequence_bert_encode_output.shape[-2].value
-        #shape [batch_size, sequence_length, sequencd_length, predicate_label_numbers]
+        # shape [batch_size, sequence_length, sequencd_length, predicate_label_numbers]
         predicate_score_matrix = getHeadSelectionScores(encode_input=sequence_bert_encode_output, hidden_size_n1=100,
                                                         label_number=num_predicate_labels)
         predicate_head_probabilities = tf.nn.sigmoid(predicate_score_matrix)
-        #predicate_head_prediction = tf.argmax(predicate_head_probabilities, axis=3)
+        # predicate_head_prediction = tf.argmax(predicate_head_probabilities, axis=3)
         predicate_head_predictions_round = tf.round(predicate_head_probabilities)
         predicate_head_predictions = tf.cast(predicate_head_predictions_round, tf.int32)
-        #shape [batch_size, sequence_length, sequencd_length]
+        # shape [batch_size, sequence_length, sequencd_length]
         predicate_matrix = tf.reshape(predicate_matrix_ids, [-1, bert_sequenc_length, bert_sequenc_length])
-        #shape [batch_size, sequence_length, sequencd_length, predicate_label_numbers]
-        gold_predicate_matrix_one_hot = tf.one_hot(predicate_matrix, depth=num_predicate_labels, dtype=tf.float32)
-        # shape [batch_size, sequence_length, sequencd_length, predicate_label_numbers]
-        predicate_sigmoid_cross_entropy_with_logits = tf.nn.sigmoid_cross_entropy_with_logits(
-            logits=predicate_score_matrix,
-            labels=gold_predicate_matrix_one_hot)
-        # shape []
-        predicate_head_select_loss = tf.reduce_sum(predicate_sigmoid_cross_entropy_with_logits)
-        # return predicate_head_probabilities, predicate_head_predictions, predicate_head_select_loss
+
+        loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
+
+        def mask_head_select_loss_function(real, pred):
+            mask = tf.math.logical_not(tf.math.equal(real, 0))
+            loss_ = loss_object(real, pred)
+
+            mask = tf.cast(mask, dtype=loss_.dtype)
+            loss_ *= mask
+
+            return tf.reduce_mean(loss_)
+
+        predicate_head_select_loss = mask_head_select_loss_function(predicate_matrix, predicate_score_matrix)
 
     with tf.variable_scope("token_label_loss"):
         bert_encode_hidden_size = sequence_bert_encode_output.shape[-1].value
@@ -567,6 +570,7 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
 
         token_label_logits = tf.reshape(token_label_logits, [-1, FLAGS.max_seq_length, num_token_labels])
         token_label_log_probs = tf.nn.log_softmax(token_label_logits, axis=-1)
+
         token_label_one_hot_labels = tf.one_hot(token_label_ids, depth=num_token_labels, dtype=tf.float32)
         token_label_per_example_loss = -tf.reduce_sum(token_label_one_hot_labels * token_label_log_probs, axis=-1)
         token_label_loss = tf.reduce_sum(token_label_per_example_loss)
@@ -896,8 +900,10 @@ def main(_):
         predicate_head_probabilities_file = os.path.join(FLAGS.output_dir, "predicate_head_probabilities.txt")
         with open(token_label_output_predict_file, "w", encoding='utf-8') as token_label_writer:
             with open(predicate_output_predict_file, "w", encoding='utf-8') as predicate_head_predictions_writer:
-                with open(predicate_output_predict_id_file, "w", encoding='utf-8') as predicate_head_predictions_id_writer:
-                    with open(predicate_head_probabilities_file, "w", encoding='utf-8') as predicate_head_probabilities_writer:
+                with open(predicate_output_predict_id_file, "w",
+                          encoding='utf-8') as predicate_head_predictions_id_writer:
+                    with open(predicate_head_probabilities_file, "w",
+                              encoding='utf-8') as predicate_head_probabilities_writer:
                         num_written_lines = 0
                         tf.logging.info("***** token_label predict and predicate labeling results *****")
                         for (i, prediction) in enumerate(result):
@@ -915,7 +921,8 @@ def main(_):
                                 predicate_label_id2label[id] for id in predicate_head_predictions_flatten) + "\n"
                             predicate_head_predictions_writer.write(predicate_head_predictions_line)
                             #
-                            predicate_head_predictions_id_line = " ".join(str(id) for id in predicate_head_predictions_flatten) + "\n"
+                            predicate_head_predictions_id_line = " ".join(
+                                str(id) for id in predicate_head_predictions_flatten) + "\n"
                             predicate_head_predictions_id_writer.write(predicate_head_predictions_id_line)
 
                             # predicate_head_probabilities_flatten = predicate_head_probabilities.flatten()

@@ -11,13 +11,15 @@ Multiple-Relations-Extraction-Only-Look-Once. Just look at the sentence once and
 ```
 
 ## Main principle
-The entity extraction task is converted into a sequence annotation task, and the multi-relationship extraction task is converted into a [multi-head selection task](https://arxiv.org/abs/1804.07847).
 
-把实体抽取任务转换成序列标注任务，把多关系抽取任务转换成[多头选择任务](https://arxiv.org/abs/1804.07847)。
+![](https://yuanxiaosc.github.io/2019/05/28/%E4%BF%A1%E6%81%AF%E6%8A%BD%E5%8F%96%E4%BB%BB%E5%8A%A1%E7%9B%B8%E5%85%B3%E8%AE%BA%E6%96%87%E5%8F%91%E5%B1%95%E8%84%89%E7%BB%9C/model-2018Bekoulis.png)
 
-The token will be sent to the model, and the model will predict the output label, predicate value, and predicate location.
+![](https://yuanxiaosc.github.io/2019/05/28/%E4%BF%A1%E6%81%AF%E6%8A%BD%E5%8F%96%E4%BB%BB%E5%8A%A1%E7%9B%B8%E5%85%B3%E8%AE%BA%E6%96%87%E5%8F%91%E5%B1%95%E8%84%89%E7%BB%9C/model-2018Verga.png)
 
-token会被送入模型，模型会预测输出label、predicate value 和 predicate location。
+
+The entity extraction task is converted into a sequence annotation task, and the multi-relationship extraction task is converted into a [multi-head selection task](https://arxiv.org/abs/1804.07847). The token will be sent to the model, and the model will predict the output label, predicate value, and predicate location. Using the bin/read_standard_format_data.py file, the original game data format can be converted into the data format required for the multi-head selection model, as follows:
+
+把实体抽取任务转换成序列标注任务，把多关系抽取任务转换成[多头选择任务](https://arxiv.org/abs/1804.07847)。token会被送入模型，模型会预测输出label、predicate value 和 predicate location。使用bin/read_standard_format_data.py文件可以把原始比赛数据格式转换成多头选择模型所需数据格式，如下所示：
 
 ```
 +-------+-------+------------+----------------------+--------------------+
@@ -65,10 +67,10 @@ token会被送入模型，模型会预测输出label、predicate value 和 predi
 |bin/integrated_model_output.py|Organize the output of model prediction into standard data format.|
 |bin/read_standard_format_data.py|View formatted data.|
 |bin/test_head_select_scores.py|One method for solving the relationship extraction problem: the multi-head selection method.|
+|experimental_loss_function|run_multiple_relations_extraction_XXX.py, File under experiment.|
 |raw_data||
 |produce_submit_json_file.py|Generate entity relationship triples and write them to JSON files.|
 |run_multiple_relations_extraction.py|The most basic model for model training and prediction.|
-|run_multiple_relations_extraction_XXX.py|File under experiment.|
 
 ### Need Your Help!
 
@@ -79,7 +81,7 @@ token会被送入模型，模型会预测输出label、predicate value 和 predi
 **Problem code location**
 > run_multiple_relations_extraction.py 531~549 lines!
 
-You can try different experiments (run_multiple_relations_extraction_XXX.py) and share your results.
+You can try different experiments (experimental_loss_function/run_multiple_relations_extraction_XXX.py) and share your results.
 
 ## Use example
 
@@ -132,6 +134,8 @@ python bin/data_manager.py
 
 #### Step4： Model training
 
+Run_multiple_relations_extraction_mask_loss.py is recommended.
+
 ```
 python run_multiple_relations_extraction.py \
 --task_name=SKE_2019 \
@@ -170,8 +174,3 @@ python produce_submit_json_file.py
 
 ## Paper realization
 This code is an unofficial implementation of [Extracting Multiple-Relations in One-Pass with Pre-Trained Transformers](https://arxiv.org/abs/1902.01030) and [Joint entity recognition and relation extraction as a multi-head selection problem](https://arxiv.org/abs/1804.07847).
-
-## Main principle
-
-![](https://yuanxiaosc.github.io/2019/05/02/%E4%BF%A1%E6%81%AF%E6%8A%BD%E5%8F%96%E4%BB%BB%E5%8A%A1%E7%9B%B8%E5%85%B3%E8%AE%BA%E6%96%87%E5%8F%91%E5%B1%95%E8%84%89%E7%BB%9C/model-2018Verga.png)
-![](https://yuanxiaosc.github.io/2019/05/02/%E4%BF%A1%E6%81%AF%E6%8A%BD%E5%8F%96%E4%BB%BB%E5%8A%A1%E7%9B%B8%E5%85%B3%E8%AE%BA%E6%96%87%E5%8F%91%E5%B1%95%E8%84%89%E7%BB%9C/illustration-2019Wang.png)
