@@ -541,19 +541,27 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
         predicate_head_predictions = tf.cast(predicate_head_predictions_round, tf.int32)
         # shape [batch_size, sequence_length, sequencd_length]
         predicate_matrix = tf.reshape(predicate_matrix_ids, [-1, bert_sequenc_length, bert_sequenc_length])
+        gold_predicate_matrix_one_hot = tf.one_hot(predicate_matrix, depth=num_predicate_labels, dtype=tf.float32)
+        # shape [batch_size, sequence_length, sequencd_length, predicate_label_numbers]
+        predicate_sigmoid_cross_entropy_with_logits = tf.nn.sigmoid_cross_entropy_with_logits(
+            logits=predicate_score_matrix,
+            labels=gold_predicate_matrix_one_hot)
 
-        loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
+        def batch_sequence_matrix_max_sequence_length(batch_sequence_matrix):
+            """Get the longest effective length of the input sequence (excluding padding)"""
+            mask = tf.math.logical_not(tf.math.equal(batch_sequence_matrix, 0))
+            mask = tf.cast(mask, tf.float32)
+            mask_length = tf.reduce_sum(mask, axis=1)
+            mask_length = tf.cast(mask_length, tf.int32)
+            mask_max_length = tf.reduce_max(mask_length)
+            return mask_max_length
 
-        def mask_head_select_loss_function(real, pred):
-            mask = tf.math.logical_not(tf.math.equal(real, 0))
-            loss_ = loss_object(real, pred)
+        mask_max_length = batch_sequence_matrix_max_sequence_length(token_label_ids)
 
-            mask = tf.cast(mask, dtype=loss_.dtype)
-            loss_ *= mask
-
-            return tf.reduce_mean(loss_)
-
-        predicate_head_select_loss = mask_head_select_loss_function(predicate_matrix, predicate_score_matrix)
+        predicate_sigmoid_cross_entropy_with_logits = predicate_sigmoid_cross_entropy_with_logits[
+                                                      :, :mask_max_length, :mask_max_length, :]
+        # shape []
+        predicate_head_select_loss = tf.reduce_sum(predicate_sigmoid_cross_entropy_with_logits)
 
     with tf.variable_scope("token_label_loss"):
         bert_encode_hidden_size = sequence_bert_encode_output.shape[-1].value
